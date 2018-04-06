@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://java.sun.com/jsf/facelets">
+    <h:head>
+        <title>Relatório Trello</title>
+    </h:head>
+    <h:body>
+      	<h:form id="form">
+		    <p:growl id="msgs" showDetail="true" />
+		 
+		    <p:dataTable id="tableCards" var="card" value="#{dataTrello.listaCards}" sortBy="#{card.idList}" expandableRowGroups="true">
+		        <f:facet name="header">
+		            Cards
+		        </f:facet>
+		        
+		        <p:headerRow>
+	            <p:column colspan="6">
+	                <h:outputText value="#{card.idList}" />
+	            </p:column>
+	        	</p:headerRow>
+	        	
+		        <p:column headerText="Card">
+		            <h:outputText value="#{card.name}" />
+		        </p:column>
+		        <p:column headerText="Data Entrega">
+		            <h:outputText value="#{card.dataEntrega}" >
+		            	<f:convertDateTime pattern="dd/MM/yyyy" />
+		            </h:outputText>
+		        </p:column>
+		        <p:column headerText="Tempo Gasto Ativo">
+		            <h:outputText value="#{card.tempoAtivo}" />
+		        </p:column>
+		        <p:column headerText="APF Estimada">
+		            <h:outputText value="#{card.apfEstimada}" />
+		        </p:column>
+		        <p:column headerText="APF Detalhada">
+		            <h:outputText value="#{card.apfDetalhada}" />
+		        </p:column>
+		        <p:column style="width:32px;text-align: center">
+		             <p:commandButton update=":form:cardDetail" oncomplete="PF('detalhesCard').show()" icon="ui-icon-search" title="View">
+		                <f:setPropertyActionListener value="#{card}" target="#{dataTrello.selectedCard}" />
+		            </p:commandButton>
+		        </p:column>
+		    </p:dataTable>
+		    
+		    <p:dialog header="Card Info" widgetVar="detalhesCard" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+	        <p:outputPanel id="cardDetail" style="text-align:center;">
+	            <p:panelGrid  columns="2" rendered="#{not empty dataTrello.selectedCard.listaAcoes}" columnClasses="label,value" >
+
+	                <h:outputText value="Id" />
+	                <h:outputText value="#{dataTrello.selectedCard.listaAcoes.idAcao}" />
+	 
+	                <h:outputText value="Lista Antes" />
+	                <h:outputText value="#{dataTrello.selectedCard.listaAcoes.listaAntes}" />
+	 
+	                <h:outputText value="Lista Depois" />
+	                <h:outputText value="#{dataTrello.selectedCard.listaAcoes.listaDepois}" />
+	 
+	                <h:outputText value="Data Ocorrência" />
+	                <h:outputText value="#{dataTrello.selectedCard.listaAcoes.dataOcorrencia}" />
+	            </p:panelGrid>
+	        </p:outputPanel>
+	    	</p:dialog>
+	    </h:form>
+    </h:body>
+</html>

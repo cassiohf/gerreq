@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://java.sun.com/jsf/facelets">
+    <h:head>
+        <title>Tickets Redmine</title>
+    </h:head>
+    <h:body>
+	<h:form>
+		<p:growl id="msgs" showDetail="true" />
+	
+	    <p:panel header="Selecione uma versão" style="margin-bottom:10px;">
+        	<h:panelGrid columns="2" cellpadding="5">
+            	<p:outputLabel for="projeto" value="Projeto: " />
+            	<p:selectOneMenu id="projeto" value="#{dataReqView.projetoEntrada}" style="width:150px">
+                	<p:ajax listener="#{dataReqView.onProjetoChange}" update="versao" />
+                	<f:selectItem itemLabel="Selecione um projeto" itemValue="" noSelectionOption="true" />
+                	<f:selectItems value="#{dataReqView.projetos}" />
+            	</p:selectOneMenu>
+ 
+            	<p:outputLabel for="versao" value="Versão: " />
+            	<p:selectOneMenu id="versao" value="#{dataReqView.versaoEntrada}" style="width:150px">
+                	<f:selectItem itemLabel="Selecione uma versão" itemValue="" noSelectionOption="true" />
+                	<f:selectItems value="#{dataReqView.versoes}" />
+            	</p:selectOneMenu>
+        	</h:panelGrid>
+ 
+        	<p:separator />
+ 
+        	<p:commandButton value="Buscar" update="tableTickets" actionListener="#{dataReqView.buscarTickets}" icon="ui-icon-check" />
+    	</p:panel>
+	
+    <p:dataTable id="tableTickets" var="ticket" value="#{dataReqView.tickets}" sortBy="#{ticket.nomeProjeto}" expandableRowGroups="true">
+        <p:headerRow>
+            <p:column colspan="4">
+                <h:outputText value="#{ticket.nomeProjeto} v#{ticket.versao}" />
+            </p:column>
+        </p:headerRow>
+        <p:column headerText="Ticket">
+            <h:outputText value="#{ticket.ticket}" />
+        </p:column>
+        <p:column headerText="Descrição">
+            <h:outputText value="#{ticket.titulo}" />
+        </p:column>
+        <p:column headerText="% Terminado">
+            <h:outputText value="#{ticket.percTerminado}" />
+        </p:column>
+        <p:column headerText="Esforço Análise">
+            <h:outputText value="#{ticket.esfocoAnalise}" />
+        </p:column>
+        <p:summaryRow>
+        	<p:column colspan="3" style="text-align:right">
+                <h:outputText value="Peso Especificado/Peso Total:" />
+            </p:column>
+            <p:column>
+                <h:outputText value="#{dataReqView.pesoEspecificado}/#{dataReqView.pesoTotal} (#{dataReqView.getPercentualTotal()*100}%)">
+                </h:outputText>
+            </p:column>
+        </p:summaryRow>
+    </p:dataTable>
+    <br />
+    <ul>
+    	<li><h:outputLink value="relatorios/cardsTrello.xhtml">Cards Trello</h:outputLink></li>
+   	</ul>
+	</h:form>
+    </h:body>
+</html>
