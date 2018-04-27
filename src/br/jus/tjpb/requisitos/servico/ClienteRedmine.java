@@ -17,12 +17,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import br.jus.tjpb.requisitos.entidade.TicketRedmine;
+import br.jus.tjpb.requisitos.enumeration.Constantes;
 
 @ManagedBean(name="clienteRedmine")
 @SessionScoped
 public class ClienteRedmine {
 
-	public List<TicketRedmine> getTickets(Integer numVersao) {
+	public List<TicketRedmine> getTickets(Integer numVersao, Constantes opcao) {
 		
 		//Promagis: 12; versão 1056
 		//Certo: 128; versão: 1318
@@ -31,7 +32,8 @@ public class ClienteRedmine {
 		//String endereco = "http://redmine.tjpb.jus.br/issues.json?project_id="+numProjeto+"&fixed_version_id="+numVersao;
 		String endereco = "http://redmine.tjpb.jus.br/issues.json?&fixed_version_id="+numVersao;
 		
-		ArrayList<TicketRedmine> listaTickets = new ArrayList<TicketRedmine>();
+		ArrayList<TicketRedmine> listaTicketsRequisitos = new ArrayList<TicketRedmine>();
+		ArrayList<TicketRedmine> listaTicketsMonitoramento = new ArrayList<TicketRedmine>();
 		
 		try {
 			URL url  = new URL(endereco);
@@ -101,13 +103,16 @@ public class ClienteRedmine {
 
 				if(ticket.getIdTipoTicket()==2 || ticket.getIdTipoTicket()==5) {
 					
-					listaTickets.add(ticket);
+					listaTicketsRequisitos.add(ticket);
 					
 //					esforcoTotal += ticket.getEsfocoAnalise();
 //					if(ticket.getPercTerminado() > 30) {
 //						esforcoRealizado += ticket.getEsfocoAnalise();
 //					}
+					
 					System.out.println(ticket.toString());
+				} else if(ticket.getIdTipoTicket()==3) {
+					listaTicketsMonitoramento.add(ticket);
 				}
 				
 				
@@ -122,7 +127,11 @@ public class ClienteRedmine {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		return listaTickets;
+		
+		if(opcao.equals(Constantes.MONITORAMENTO))
+			return listaTicketsMonitoramento;
+		else
+			return listaTicketsRequisitos;
 	}
 
 }

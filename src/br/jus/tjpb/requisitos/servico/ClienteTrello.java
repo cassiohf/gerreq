@@ -26,6 +26,7 @@ import org.json.JSONObject;
 
 import br.jus.tjpb.requisitos.entidade.AcaoCard;
 import br.jus.tjpb.requisitos.entidade.CardTrello;
+import br.jus.tjpb.requisitos.enumeration.Constantes;
 
 @ManagedBean(name="clienteTrello")
 @SessionScoped
@@ -135,9 +136,9 @@ public class ClienteTrello {
 							valor = descricoes[j].substring(indice, descricoes[j].length()).trim();
 							ct.getDescricoes().put(chave, valor);
 							if(chave.equals("APFEstimativa") && !valor.isEmpty()){
-								ct.setApfEstimada(Integer.parseInt(valor));
+								ct.setApfEstimada(Double.parseDouble(valor.replace("," , ".")));
 							}else if(chave.equals("APFDetalhada") && !valor.isEmpty()) {
-								ct.setApfDetalhada(Integer.parseInt(valor));
+								ct.setApfDetalhada(Double.parseDouble(valor.replace("," , ".")));
 							}
 						}
 						
@@ -145,9 +146,9 @@ public class ClienteTrello {
 					
 					//Obter tickets Redmine da versão constante no Trello
 					String versaoRedmine = ct.getDescricoes().get("VersaoNoRedmine");
-					if (!versaoRedmine.isEmpty()) {
+					if (versaoRedmine != null) {
 						int numVersao = Integer.parseInt(versaoRedmine);
-						ct.setTicketsRedmine(cliente.getTickets(numVersao));
+						ct.setTicketsRedmine(cliente.getTickets(numVersao, Constantes.REQUISITOS));
 						ct.calcularPercentualTotal();
 					}
 					
@@ -186,9 +187,13 @@ public class ClienteTrello {
 					arrAcoes = new JSONArray(output.toString());
 					
 					int tempoAtivo = 0;
+					int tempoAtivoSemFimDeSemana = 0;
 					int tempo;
+					int tempoSemFimDeSemana;
 					for(int j=arrAcoes.length()-1;j>=0;j--){
 						tempo=0;
+						tempoSemFimDeSemana=0;
+						
 						acaojson = arrAcoes.getJSONObject(j);
 						
 						if(acaojson.getJSONObject("data").has("listBefore")) {
@@ -206,17 +211,26 @@ public class ClienteTrello {
 
 							if (j<arrAcoes.length()-1 && ct.getListaAcoes().size()>1 && listas_ativas.containsKey(acao.getIdListaAntes())) {
 								tempo += Days.daysBetween(ct.getListaAcoes().get(ct.getListaAcoes().size()-2).getDataOcorrencia(), acao.getDataOcorrencia()).getDays();
+								tempoSemFimDeSemana+=betweenDaysIgnoreWeekends(ct.getListaAcoes().get(ct.getListaAcoes().size()-2).getDataOcorrencia(), acao.getDataOcorrencia());
+								
 								System.out.println("Tempo decorrido em "+acao.getListaAntes()+": "+ tempo);
+								System.out.println("Tempo decorrido em "+acao.getListaAntes()+" sem fins de semana: "+ tempoSemFimDeSemana);
+								
 								tempoAtivo+=tempo;
+								tempoAtivoSemFimDeSemana+=tempoSemFimDeSemana;
 							}
 						}
 					}
 					if(!ct.getListaAcoes().isEmpty()) {
 						tempo = Days.daysBetween(ct.getListaAcoes().get(ct.getListaAcoes().size()-1).getDataOcorrencia(), DateTime.now()).getDays();
+						tempoSemFimDeSemana=betweenDaysIgnoreWeekends(ct.getListaAcoes().get(ct.getListaAcoes().size()-1).getDataOcorrencia(), DateTime.now());
+						
 						System.out.println("Tempo decorrido em "+ct.getListaAcoes().get(ct.getListaAcoes().size()-1).getListaDepois()+": "+tempo);
 						tempoAtivo+=tempo;
+						tempoAtivoSemFimDeSemana+=tempoSemFimDeSemana;
 					}
 					ct.setTempoAtivo(tempoAtivo);
+					ct.setTempoAtivoSemFimDeSemana(tempoAtivoSemFimDeSemana);
 					listaCards.add(ct);
 					
 					System.out.println(ct.toString());
@@ -234,6 +248,51 @@ public class ClienteTrello {
 		}//////////
 		return listaCards;
 
+	}
+	
+	private int betweenDaysIgnoreWeekends(DateTime startDate, DateTime endDate) {
+	    //Um numero que representa o dia da semana para a data final, exemplo segunda=1, terça=2, quarta=3...
+	    int dayOfWeekEndDateNumber = Integer.valueOf(endDate.dayOfWeek()
+	            .getAsString());
+	    //Um numero que representa o dia da semana para a data inicial, exemplo segunda=1, terça=2, quarta=3...
+	    int dayOfWeekStartDateNumber = Integer.valueOf(startDate.dayOfWeek()
+	            .getAsString());
+	    //Se a data final for sabado ou domingo, finja ser sexta-feira
+	    if (dayOfWeekEndDateNumber == 6 || dayOfWeekEndDateNumber == 7) {
+	        int DaysToAdd = 8 - dayOfWeekEndDateNumber;
+	        endDate = endDate.plusDays(DaysToAdd);
+	        dayOfWeekEndDateNumber = Integer.valueOf(endDate.dayOfWeek()
+	                .getAsString());
+	    }
+
+	    //Se a data inicial for sabado ou domingo, finja ser segunda-feira
+	    if (dayOfWeekStartDateNumber == 6 || dayOfWeekStartDateNumber == 7) {
+	        int DaysToAdd = 8 - dayOfWeekStartDateNumber;
+	        startDate = startDate.plusDays(DaysToAdd);
+	        dayOfWeekStartDateNumber = Integer.valueOf(startDate.dayOfWeek()
+	                .getAsString());
+	    }
+
+	    //Quantos dias se passaram contando os fins de semana
+	    int days = Days.daysBetween(startDate, endDate).getDays();
+	    //Quantas semanas se passaram exatamente
+	    int weeks = days / 7;
+	    //O excesso de dias que sobrou, exemplo: 1 semana e 3 dias o excess=3 e weeks=1
+	    int excess = days % 7;
+
+	    //Se a data inicial for igual a data final, passou 0 dia
+	    if (startDate.equals(endDate)) {
+	        return 0;
+	    } else {
+	        //O excesso de dias passou pelo fim de semana, então deve-se retirar 2 dias
+	        //da quantidade final de dias
+	        if (excess + dayOfWeekStartDateNumber >= 6) {
+	            //Quantidade de semanas * 5 dias uteis + o excesso de dias - o final de semana que o excesso atravessou
+	            return weeks * 5 + excess - 2;
+	        }
+	        //Quantidade de semanas * 5 dias uteis + o excesso de dias
+	        return weeks * 5 + excess;
+	    }
 	}
 
 }

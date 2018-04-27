@@ -1,5 +1,7 @@
 package br.jus.tjpb.requisitos.entidade;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,13 +28,14 @@ public class CardTrello {
 	private double pesoTotal;
 	
 	private int tempoAtivo;
+	private int tempoAtivoSemFimDeSemana;
 	
 	private ArrayList<AcaoCard> listaAcoes;
 	
 	private ArrayList<String> listaMembros;
 	
 	private List<TicketRedmine> ticketsRedmine;
-	private double percentualTotal;
+	private BigDecimal percentualTotal;
 	
 	public CardTrello() {
 		listaAcoes = new ArrayList<AcaoCard>();
@@ -155,6 +158,14 @@ public class CardTrello {
 		this.tempoAtivo = tempoAtivo;
 	}
 
+	public int getTempoAtivoSemFimDeSemana() {
+		return tempoAtivoSemFimDeSemana;
+	}
+
+	public void setTempoAtivoSemFimDeSemana(int tempoAtivoSemFimDeSemana) {
+		this.tempoAtivoSemFimDeSemana = tempoAtivoSemFimDeSemana;
+	}
+
 	public List<TicketRedmine> getTicketsRedmine() {
 		return ticketsRedmine;
 	}
@@ -187,11 +198,11 @@ public class CardTrello {
 		this.listaMembros.add(membro);
 	}
 
-	public double getPercentualTotal() {
+	public BigDecimal getPercentualTotal() {
 		return percentualTotal;
 	}
 
-	public void setPercentualTotal(double percentualTotal) {
+	public void setPercentualTotal(BigDecimal percentualTotal) {
 		this.percentualTotal = percentualTotal;
 	}
 
@@ -209,8 +220,8 @@ public class CardTrello {
 	public void calcularPercentualTotal() {
 		calcularPesos();
 		if(pesoTotal != 0)
-			setPercentualTotal(pesoEspecificado/pesoTotal);
-		else setPercentualTotal(0);
+			setPercentualTotal(new BigDecimal(pesoEspecificado).divide(new BigDecimal(pesoTotal), 2, RoundingMode.HALF_UP));
+		else setPercentualTotal(new BigDecimal(0.0));
 	}
 	
 }
